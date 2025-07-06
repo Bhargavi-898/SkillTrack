@@ -7,9 +7,9 @@ const fs = require("fs");
 
 const app = express();
 
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use(cors());
 
 // Optional: log all requests
@@ -22,19 +22,28 @@ app.use((req, res, next) => {
 const videoDir = path.join(__dirname, "uploads/videos");
 if (!fs.existsSync(videoDir)) fs.mkdirSync(videoDir, { recursive: true });
 
-// Serve static files
+// Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Fix for mongoose warnings
+// Fix Mongoose deprecation warning
 mongoose.set("strictQuery", false);
 
+// ✅ Fix: Always use environment variable (no fallback to localhost in production)
+if (!process.env.MONGO_URI) {
+  console.error("❌ MONGO_URI not found. Please set it in environment variables.");
+  process.exit(1);
+}
+
 mongoose
-  .connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/skilltrack", {
+  .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
   .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err);
+    process.exit(1);
+  });
 
 // Routes
 const userRoutes = require("./routes/user");
@@ -52,5 +61,5 @@ app.use((err, req, res, next) => {
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
