@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edit Profile</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+    }
+
+    .edit-container {
+      background: white;
+      padding: 30px;
+      max-width: 400px;
+      margin: 0 auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+    }
+
+    input[type="text"], input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #2980b9;
+    }
+
+    #currentPhoto {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 50%;
+      margin: 0 auto 10px auto;
+      display: block;
+    }
+
+    .back {
+      text-align: center;
+      margin-top: 15px;
+    }
+
+    .back a {
+      color: #2c3e50;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="edit-container">
+    <h2>Edit Profile</h2>
+    <form id="editForm" enctype="multipart/form-data">
+      
+      <input type="text" id="editName" name="name" placeholder="Name" required />
+      <input type="text" id="editBranch" name="branch" placeholder="Branch" />
+      <input type="text" id="editYear" name="year" placeholder="Year" />
+      <input type="file" id="editPhoto" name="profilePhoto" accept="image/*" />
+      <button type="submit">Update Profile</button>
+    </form>
+    <div class="back">
+      <a href="dashboard.html">← Back to Dashboard</a>
+    </div>
+  </div>
+
+  <script>
+    // FIX: Correct localStorage key "userData" (not "useData")
+    const user = JSON.parse(localStorage.getItem("userData"));
+    const token = localStorage.getItem("token");
+
+    if (!user || !token) {
+      alert("You are not logged in.");
+      window.location.href = "login.html";
+    }
+
+    async function loadUser() {
+      try {
+        const res = await fetch("http://localhost:3000/api/users/profile", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch profile");
+
+        const userData = await res.json();
+
+        document.getElementById("editName").value = userData.name || "";
+        document.getElementById("editBranch").value = userData.branch || "";
+        document.getElementById("editYear").value = userData.year || "";
+
+        const photoUrl = userData.profilePhoto
+          ? `http://localhost:3000/${userData.profilePhoto}`
+          : `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=random&rounded=true`;
+
+        document.getElementById("currentPhoto").src = photoUrl;
+      } catch (err) {
+        alert("Failed to load profile.");
+        console.error(err);
+      }
+    }
+
+    loadUser();
+
+    document.getElementById("editForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData();
+      formData.append("name", document.getElementById("editName").value);
+      formData.append("branch", document.getElementById("editBranch").value);
+      formData.append("year", document.getElementById("editYear").value);
+
+      const file = document.getElementById("editPhoto").files[0];
+      if (file) formData.append("profilePhoto", file);
+
+      const submitBtn = e.target.querySelector("button[type='submit']");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Updating...";
+
+      try {
+        // Use user.email from localStorage userData for update URL
+        const res = await fetch(`http://localhost:3000/api/users/update/${encodeURIComponent(user.email)}`, {
+          method: "PUT",
+          body: formData,
+          headers: {
+            // DON'T set 'Content-Type' header here; browser sets it for FormData automatically
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          alert("✅ Profile updated successfully!");
+          // FIX: update localStorage with SAME key 'userData' consistently
+          localStorage.setItem("userData", JSON.stringify(result.user));
+          window.location.href = "dashboard.html";
+        } else {
+          alert("❌ " + (result.message || "Update failed."));
+        }
+      } catch (err) {
+        console.error("Update error:", err);
+        alert("❌ Server error. Try again.");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Update Profile";
+      }
+    });
+  </script>
+</body>
+</html>

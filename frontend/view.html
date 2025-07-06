@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>All Uploaded Videos</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      padding: 40px 20px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #ffffff;
+      font-size: 32px;
+      margin-bottom: 30px;
+    }
+
+    .video-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 25px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .video-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+      padding: 20px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .video-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .video-card h3 {
+      font-size: 20px;
+      margin-bottom: 8px;
+      color: #34495e;
+    }
+
+    .video-card p {
+      margin: 5px 0;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .video-card video {
+      width: 100%;
+      height: auto;
+      margin-top: 10px;
+      border-radius: 8px;
+      background: black;
+    }
+
+    .video-card button {
+      margin-top: 12px;
+      padding: 10px 16px;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .video-card button:hover {
+      background-color: #c0392b;
+    }
+
+    @media (max-width: 480px) {
+      h2 {
+        font-size: 26px;
+      }
+
+      .video-card h3 {
+        font-size: 18px;
+      }
+
+      .video-card p {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>All Uploaded Videos</h2>
+  <div class="video-list" id="videoList"></div>
+
+  <script>
+window.onload = async () => {
+  const userId = localStorage.getItem("userId");
+  if (!userId) {
+    alert("❌ You are not logged in.");
+    return;
+  }
+
+  try {
+    const res = await fetch("http://localhost:3000/api/videos");
+    const videos = await res.json();
+
+    const container = document.getElementById("videoList");
+    const userVideos = videos.filter(video => video.uploadedBy?._id === userId);
+
+    if (userVideos.length === 0) {
+      container.innerHTML = "<p style='text-align:center;color:#ffffff;'>You haven't uploaded any videos yet.</p>";
+      return;
+    }
+
+    userVideos.forEach(video => {
+      const div = document.createElement("div");
+      div.classList.add("video-card");
+
+      div.innerHTML = `
+        <h3>${video.title}</h3>
+        <p><strong>Category:</strong> ${video.category}</p>
+        <p><strong>Description:</strong> ${video.description}</p>
+        <video controls preload="metadata">
+          <source src="${video.url}" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+        <button onclick="deleteVideo('${video._id}', this)">🗑 Delete</button>
+      `;
+
+      container.appendChild(div);
+    });
+  } catch (err) {
+    console.error("Failed to load videos:", err);
+    document.getElementById("videoList").innerHTML = "<p style='text-align:center;color:#e74c3c;'>Error loading videos.</p>";
+  }
+};
+
+
+  async function deleteVideo(id, button) {
+  if (!confirm("Are you sure you want to delete this video?")) return;
+
+  const token = localStorage.getItem("token");
+  if (!token) {
+    alert("❌ You must be logged in to delete a video.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`http://localhost:3000/api/videos/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const result = await res.json();
+
+    if (res.ok) {
+      alert(result.message);
+      button.parentElement.remove();
+    } else {
+      alert("❌ Failed to delete: " + result.message);
+    }
+  } catch (err) {
+    console.error("Delete failed:", err);
+    alert("❌ Network or server error.");
+  }
+}
+
+
+</script>
+
+</body>
+</html>
