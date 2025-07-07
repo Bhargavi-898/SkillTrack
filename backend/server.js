@@ -18,11 +18,19 @@ app.use((req, res, next) => {
   next();
 });
 
-// Ensure /uploads/videos directory exists
+// ✅ Serve frontend static files from /public
+app.use(express.static(path.join(__dirname, "public")));
+
+// ✅ Serve index.html for the root URL "/"
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// ✅ Serve uploaded files
 const videoDir = path.join(__dirname, "uploads/videos");
 if (!fs.existsSync(videoDir)) fs.mkdirSync(videoDir, { recursive: true });
 
-// Serve uploaded files
+// Serve static files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Fix Mongoose deprecation warning
@@ -34,8 +42,9 @@ if (!process.env.MONGO_URI) {
   process.exit(1);
 }
 
+// ✅ Connect to MongoDB
 mongoose
-  .connect(process.env.MONGO_URI, {
+  .connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/skilltrack", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
@@ -52,7 +61,7 @@ const videoRoutes = require("./routes/video");
 app.use("/api/users", userRoutes);
 app.use("/api/videos", videoRoutes);
 
-// Error handling middleware
+// Error handler
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
   res.status(500).json({ message: "Server error", error: err.message });
