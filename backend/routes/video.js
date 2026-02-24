@@ -7,7 +7,7 @@ const User = require("../models/User");   // ✅ FIXED
 
 const upload = require("../middlewares/upload");
 const auth = require("../middlewares/auth");
-
+const Notification = require("../models/Notification");
 
 
 /* =========================
@@ -198,39 +198,75 @@ router.get("/my", auth, async (req, res) => {
 ========================= */
 router.post("/toggle-like/:id", auth, async (req, res) => {
 
-  const video = await Video.findById(req.params.id);
+  try {
 
-  if (!video) {
-    return res.status(404).json({
-      message: "Video not found"
+    const video = await Video.findById(req.params.id);
+
+    if (!video) {
+      return res.status(404).json({
+        message: "Video not found"
+      });
+    }
+
+    const userId = (req.user.userId || req.user._id).toString();
+
+    let liked = false;
+
+    // If already liked → remove like
+    if (video.likes.includes(userId)) {
+
+      video.likes.pull(userId);
+      liked = false;
+
+    } else {
+
+      // Add like and remove dislike
+      video.dislikes.pull(userId);
+      video.likes.push(userId);
+      liked = true;
+
+      // ✅ Create notification ONLY if liking (not unliking)
+      // and not liking own video
+      if (video.uploadedBy.toString() !== userId) {
+
+        await Notification.create({
+
+          receiver: video.uploadedBy,
+          sender: userId,
+          video: video._id,
+          type: "like",
+          message: "Someone liked your video"
+
+        });
+
+        console.log("✅ Notification created");
+
+      }
+
+    }
+
+    await video.save();
+
+    // ✅ Return liked status for frontend
+    res.json({
+
+      liked: liked,
+      totalLikes: video.likes.length,
+      totalDislikes: video.dislikes.length
+
     });
-  }
 
-  const userId = (req.user.userId || req.user._id).toString();
+  } catch (err) {
 
-  if (video.likes.includes(userId)) {
+    console.error("Toggle like error:", err.message);
 
-    video.likes.pull(userId);
-
-  } else {
-
-    video.dislikes.pull(userId);
-    video.likes.push(userId);
+    res.status(500).json({
+      message: "Server error"
+    });
 
   }
-
-  await video.save();
-
-  res.json({
-
-    totalLikes: video.likes.length,
-    totalDislikes: video.dislikes.length
-
-  });
 
 });
-
-
 /* =========================
    TOGGLE DISLIKE
 ========================= */

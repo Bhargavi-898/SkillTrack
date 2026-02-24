@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema({
+
   name: { 
     type: String, 
     required: true, 
@@ -39,7 +40,27 @@ const userSchema = new mongoose.Schema({
   profilePhoto: { 
     type: String, 
     default: "uploads/default-avatar.png" 
-  }
+  },
+
+  // ======================
+  // FOLLOW SYSTEM FIELDS
+  // ======================
+
+  followers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: []
+    }
+  ],
+
+  following: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: []
+    }
+  ]
 
 }, { timestamps: true });
 

@@ -180,7 +180,20 @@
       object-fit: cover;
       border: 2px solid #3498db;
     }
+    .follow-btn {
+  margin-left: auto;
+  padding: 6px 14px;
+  background-color: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 13px;
+}
 
+.follow-btn.following {
+  background-color: #6c757d;
+}
     .uploader-info span {
       font-weight: 600;
       font-size: 14px;
@@ -215,7 +228,7 @@
     .action-btn.liked span {
       color: #007bff !important;
     }
-
+    
     .action-btn.disliked i,
     .action-btn.disliked span {
       color: #dc3545 !important;
@@ -283,6 +296,28 @@
 <body>
   <nav class="navbar">
     <h1>Skill Track</h1>
+    <div style="display:flex; align-items:center; gap:20px;">
+
+    <!-- 🔔 Notification Bell -->
+    <div style="position:relative; cursor:pointer;" onclick="toggleNotifications()">
+
+      <i class="fa-solid fa-bell" style="font-size:22px; color:white;"></i>
+
+      <span id="notificationCount"
+        style="
+          position:absolute;
+          top:-5px;
+          right:-8px;
+          background:red;
+          color:white;
+          border-radius:50%;
+          padding:2px 6px;
+          font-size:12px;
+          display:none;
+        ">
+      </span>
+
+    </div>
     <div class="profile-menu-container">
       <img src="" alt="Profile" id="profileBtn" class="profile-circle" />
       <div id="profileMenu" class="profile-menu">
@@ -298,7 +333,21 @@
       </div>
     </div>
   </nav>
-
+  <div id="notificationPanel"
+style="
+  position:absolute;
+  right:20px;
+  top:70px;
+  width:300px;
+  background:white;
+  border-radius:10px;
+  box-shadow:0 5px 20px rgba(0,0,0,0.2);
+  display:none;
+  max-height:400px;
+  overflow-y:auto;
+  z-index:999;
+">
+</div>
   <input type="text" id="searchBar" placeholder="Search videos by title..." />
   <div id="videoResults"></div>
 
@@ -359,6 +408,73 @@
       localStorage.clear();
       window.location.href = "login.html";
     }
+    let notifications = [];
+
+function toggleNotifications() {
+
+  const panel = document.getElementById("notificationPanel");
+
+  if (panel.style.display === "none") {
+    panel.style.display = "block";
+    loadNotifications();
+  } else {
+    panel.style.display = "none";
+  }
+
+}
+
+
+function loadNotifications() {
+
+  fetch("http://localhost:3000/api/notifications", {
+
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    notifications = data;
+
+    const panel = document.getElementById("notificationPanel");
+    const count = document.getElementById("notificationCount");
+
+    panel.innerHTML = "";
+
+    if (data.length === 0) {
+
+      panel.innerHTML = "<p style='padding:15px;'>No notifications</p>";
+      count.style.display = "none";
+      return;
+
+    }
+
+    count.innerText = data.length;
+    count.style.display = "block";
+
+    data.forEach(n => {
+
+      const div = document.createElement("div");
+
+      div.style.padding = "10px";
+      div.style.borderBottom = "1px solid #eee";
+
+      div.innerHTML = `
+        <b>${n.sender?.name || "Someone"}</b>
+        liked your video
+        <br>
+        <small>${new Date(n.createdAt).toLocaleString()}</small>
+      `;
+
+      panel.appendChild(div);
+
+    });
+
+  });
+
+}
 
     function fetchVideos(title = "") {
       fetch("http://localhost:3000/api/videos", {
@@ -416,9 +532,24 @@
           <p><strong>Category:</strong> ${video.category || "N/A"}</p>
 
           <div class="uploader-info">
-            <img src="${photoSrc}" alt="Uploader Photo" onclick="toggleDetails('${detailsId}')" />
-            <span>${uploaderName}</span>
-          </div>
+  <img src="${photoSrc}" alt="Uploader Photo" onclick="toggleDetails('${detailsId}')" />
+  
+  <span onclick="viewUserDetails('${uploaderId}')" style="cursor:pointer;">
+    ${uploaderName}
+  </span>
+
+  ${
+    uploaderId !== userData._id
+      ? `<button 
+           class="follow-btn" 
+           onclick="toggleFollow('${uploaderId}', this)"
+         >
+           Follow
+         </button>`
+      : ""
+  }
+
+</div>
 <div class="video-actions">
  <button onclick="toggleLike('${video._id}', this)" class="action-btn ${video.likes.includes(userData._id) ? 'liked' : ''}">
   <i class="fas fa-thumbs-up"></i>
@@ -507,7 +638,42 @@ function toggleLike(videoId, button) {
     });
 }
 
+function toggleFollow(targetUserId, button) {
 
+  const currentUserId = userData._id;
+
+  const isFollowing = button.classList.contains("following");
+
+  const url = isFollowing
+    ? `http://localhost:3000/api/users/unfollow/${targetUserId}`
+    : `http://localhost:3000/api/users/follow/${targetUserId}`;
+
+  fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      currentUserId: currentUserId
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    if (isFollowing) {
+      button.classList.remove("following");
+      button.innerText = "Follow";
+    } else {
+      button.classList.add("following");
+      button.innerText = "Following";
+    }
+
+  })
+  .catch(err => {
+    console.error("Follow error:", err);
+  });
+
+}
 function toggleDislike(videoId, button) {
   const token = localStorage.getItem("token");
   if (!token) {
@@ -593,6 +759,8 @@ function registerView(videoId) {
 
     window.onload = () => {
       fetchVideos();
+        loadNotifications();
+
     };
   </script>
 </body>
