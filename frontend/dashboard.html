@@ -314,6 +314,9 @@
           padding:2px 6px;
           font-size:12px;
           display:none;
+          font-size:12px;
+           min-width:18px;
+      text-align:center;
         ">
       </span>
 
@@ -409,22 +412,119 @@ style="
       window.location.href = "login.html";
     }
     let notifications = [];
-
 function toggleNotifications() {
 
   const panel = document.getElementById("notificationPanel");
 
-  if (panel.style.display === "none") {
+  if (!panel) return;
+
+  const isHidden =
+    panel.style.display === "none" || panel.style.display === "";
+
+  if (isHidden) {
+
     panel.style.display = "block";
+
     loadNotifications();
+
+    // ⭐ mark read AFTER panel opens
+    setTimeout(() => {
+      markNotificationsAsRead();
+    }, 300);
+
   } else {
+
     panel.style.display = "none";
+
   }
 
 }
+function loadUnreadCount() {
 
+  const token = localStorage.getItem("token");
 
+  if (!token) {
+    console.warn("No token found");
+    return;
+  }
+
+  // wait until DOM element exists
+  const badge = document.getElementById("notificationCount");
+
+  if (!badge) {
+    console.warn("Notification badge element not found");
+    return;
+  }
+
+  fetch("http://localhost:3000/api/notifications/unread/count", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+
+    console.log("Unread count received:", data); // DEBUG
+
+    const count = Number(data.count) || 0;
+
+    if (count > 0) {
+
+      badge.style.display = "block";   // IMPORTANT
+      badge.style.visibility = "visible";
+      badge.innerText = count;
+
+    } else {
+
+      badge.style.display = "none";
+      badge.innerText = "";
+
+    }
+
+  })
+  .catch(error => {
+    console.error("Unread count fetch error:", error);
+  });
+
+}
+function markNotificationsAsRead() {
+
+  const token = localStorage.getItem("token");
+
+  fetch("http://localhost:3000/api/notifications/read-all", { // ✅ correct URL
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    console.log("All notifications marked as read");
+
+    // immediately hide badge
+    const badge = document.getElementById("notificationCount");
+
+    badge.style.display = "none";
+    badge.innerText = "";
+
+    // reload count from server
+    loadUnreadCount();
+
+  })
+  .catch(err => console.error("Mark read error:", err));
+
+}
 function loadNotifications() {
+
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    console.error("No token found");
+    return;
+  }
 
   fetch("http://localhost:3000/api/notifications", {
 
@@ -434,48 +534,61 @@ function loadNotifications() {
 
   })
   .then(res => res.json())
-  .then(data => {
-
-    notifications = data;
+  .then(async data => {
 
     const panel = document.getElementById("notificationPanel");
     const count = document.getElementById("notificationCount");
 
+    if (!panel || !count) return;
+
     panel.innerHTML = "";
 
-    if (data.length === 0) {
+    if (!data || data.length === 0) {
 
-      panel.innerHTML = "<p style='padding:15px;'>No notifications</p>";
+      panel.innerHTML =
+        "<p style='padding:15px;'>No notifications</p>";
+
       count.style.display = "none";
       return;
 
     }
 
-    count.innerText = data.length;
-    count.style.display = "block";
-
-    data.forEach(n => {
+    // show count
+    
+    for (const n of data) {
 
       const div = document.createElement("div");
 
       div.style.padding = "10px";
       div.style.borderBottom = "1px solid #eee";
+      div.style.cursor = "pointer";
+
+      const senderName = n.sender?.name || "Someone";
 
       div.innerHTML = `
-        <b>${n.sender?.name || "Someone"}</b>
-        liked your video
+        <b>${senderName}</b> liked your video
         <br>
         <small>${new Date(n.createdAt).toLocaleString()}</small>
       `;
 
       panel.appendChild(div);
 
-    });
+      // ✅ mark as read automatically
+      
+
+    }
+
+    // refresh unread count badge
+    loadUnreadCount();
+
+  })
+  .catch(err => {
+
+    console.error("Notification error:", err);
 
   });
 
 }
-
     function fetchVideos(title = "") {
       fetch("http://localhost:3000/api/videos", {
         headers: { Authorization: `Bearer ${token}` }
@@ -760,8 +873,9 @@ function registerView(videoId) {
     window.onload = () => {
       fetchVideos();
         loadNotifications();
-
+         loadUnreadCount();
     };
+    setInterval(loadUnreadCount, 5000);
   </script>
 </body>
 </html>
