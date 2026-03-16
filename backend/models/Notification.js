@@ -2,37 +2,38 @@ const mongoose = require("mongoose");
 
 const notificationSchema = new mongoose.Schema({
 
-    receiver: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
+  receiver: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true
+  },
 
-    sender: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-    },
+  sender: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true
+  },
 
-    video: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Video"
-    },
+  video: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Video"
+  },
 
-    message: {
-        type: String,
-        required: true
-    },
+  message: {
+    type: String,
+    required: true
+  },
 
-    type: {
-        type: String,
-        enum: ["like", "comment", "upload"],
-        required: true
-    },
+  type: {
+    type: String,
+    enum: ["like", "dislike", "comment", "upload"], // ✅ FIXED
+    required: true
+  },
 
-    isRead: {
-        type: Boolean,
-        default: false
-    }
+  isRead: {
+    type: Boolean,
+    default: false
+  }
 
 }, { timestamps: true });
 

@@ -33,36 +33,61 @@
       box-sizing: border-box;
     }
 
-    button {
-      width: 100%;
-      padding: 10px;
-      background: #3498db;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 16px;
-      margin-top: 10px;
-    }
+   .back-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: #0073b1;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
 
+.back-btn:hover {
+    background: #005582;
+}
+input:focus{
+outline:none;
+border:1px solid #667eea;
+box-shadow:0 0 5px rgba(102,126,234,0.5);
+}
     button:hover {
       background: #2980b9;
     }
 
-    #currentPhoto {
-      width: 100px;
-      height: 100px;
-      object-fit: cover;
-      border-radius: 50%;
-      margin: 0 auto 10px auto;
-      display: block;
-    }
+   #currentPhoto{
+width:50px;
+height:120px;
+border-radius:50%;
+object-fit:cover;
+display:block;
+margin:10px auto 20px auto;
+border:3px solid #667eea;
+}
 
     .back {
       text-align: center;
       margin-top: 15px;
     }
+    .back-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: #0073b1;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
 
+.back-btn:hover {
+    background: #005582;
+}
     .back a {
       color: #2c3e50;
       text-decoration: none;
@@ -71,6 +96,8 @@
 </head>
 <body>
   <div class="edit-container">
+        <button class="back-btn" onclick="goBack()">⬅ Back</button>
+
     <h2>Edit Profile</h2>
     <form id="editForm" enctype="multipart/form-data">
       
@@ -94,7 +121,9 @@
       alert("You are not logged in.");
       window.location.href = "login.html";
     }
-
+    function goBack() {
+    window.history.back();
+}
     async function loadUser() {
       try {
         const res = await fetch("http://localhost:3000/api/users/profile", {
@@ -168,6 +197,7 @@
         submitBtn.textContent = "Update Profile";
       }
     });
+    
   </script>
 </body>
 </html>

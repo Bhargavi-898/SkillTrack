@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const title = document.getElementById("title").value.trim();
     const description = document.getElementById("description").value.trim();
-    const category = document.getElementById("category").value;
     const fileInput = document.getElementById("videoFile");
 
     const token = localStorage.getItem("token");
@@ -36,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", description);
-    formData.append("category", category);
+    
     formData.append("uploadedBy", uploadedBy);
     formData.append("video", fileInput.files[0]);
 
@@ -64,4 +63,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     popup.style.display = "flex";
   });
+  
 });
+function goBack() {
+    window.history.back();
+}

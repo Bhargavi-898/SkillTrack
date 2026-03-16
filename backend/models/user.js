@@ -33,46 +33,24 @@ const userSchema = new mongoose.Schema({
 
   password: { 
     type: String, 
-    required: true, 
-    minlength: 3 
+    required: true,
+    minlength: 3
   },
 
   profilePhoto: { 
     type: String, 
-    default: "uploads/default-avatar.png" 
+    default: "uploads/default-avatar.png"
   },
 
-  // ======================
-  // FOLLOW SYSTEM FIELDS
-  // ======================
-
-  followers: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: []
-    }
-  ],
-
-  following: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: []
-    }
-  ]
+  
 
 }, { timestamps: true });
 
 
-// ======================
-// Hash password before saving
-// ======================
+// HASH PASSWORD
 userSchema.pre("save", async function (next) {
 
-  if (!this.isModified("password")) {
-    return next();
-  }
+  if (!this.isModified("password")) return next();
 
   try {
     const salt = await bcrypt.genSalt(10);
@@ -85,21 +63,11 @@ userSchema.pre("save", async function (next) {
 });
 
 
-// ======================
-// Compare password method
-// ======================
+// COMPARE PASSWORD
 userSchema.methods.comparePassword = async function (candidatePassword) {
 
-  try {
-    return await bcrypt.compare(candidatePassword, this.password);
-  } catch (err) {
-    throw err;
-  }
+  return await bcrypt.compare(candidatePassword, this.password);
 
 };
 
-
-// ======================
-// Export model safely
-// ======================
 module.exports = mongoose.models.User || mongoose.model("User", userSchema);

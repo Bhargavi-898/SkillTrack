@@ -9,7 +9,6 @@ const upload = require("../middlewares/upload");
 const auth = require("../middlewares/auth");
 const Notification = require("../models/Notification");
 
-
 /* =========================
    Helper: Format Video
 ========================= */
@@ -267,43 +266,97 @@ router.post("/toggle-like/:id", auth, async (req, res) => {
   }
 
 });
+router.get("/:id/comments", async (req, res) => {
+
+  try {
+
+    const video = await Video.findById(req.params.id)
+      .populate("reviews.user", "name");
+
+    if (!video) {
+      return res.status(404).json({
+        message: "Video not found"
+      });
+    }
+
+    res.status(200).json(video.reviews);
+
+  } catch (error) {
+
+    console.error("Fetch comments error:", error);
+
+    res.status(500).json({
+      message: "Failed to fetch comments"
+    });
+
+  }
+
+});
 /* =========================
    TOGGLE DISLIKE
 ========================= */
 router.post("/toggle-dislike/:id", auth, async (req, res) => {
+  try {
 
-  const video = await Video.findById(req.params.id);
+    const video = await Video.findById(req.params.id);
 
-  if (!video) {
-    return res.status(404).json({
-      message: "Video not found"
+    if (!video) {
+      return res.status(404).json({
+        message: "Video not found"
+      });
+    }
+
+    const userId = (req.user.userId || req.user._id).toString();
+
+    let disliked = false;
+
+    if (video.dislikes.includes(userId)) {
+
+      video.dislikes.pull(userId);
+
+    } else {
+
+      video.likes.pull(userId);
+      video.dislikes.push(userId);
+      disliked = true;
+
+      // 🔔 Create notification when newly disliked
+      if (video.uploadedBy.toString() !== userId) {
+
+        await Notification.create({
+
+          receiver: video.uploadedBy,
+          sender: userId,
+          video: video._id,
+          type: "dislike",
+          message: "Someone disliked your video"
+
+        });
+
+        console.log("✅ Dislike notification created");
+
+      }
+
+    }
+
+    await video.save();
+
+    res.json({
+      disliked,
+      totalLikes: video.likes.length,
+      totalDislikes: video.dislikes.length
     });
-  }
 
-  const userId = (req.user.userId || req.user._id).toString();
+  } catch (err) {
 
-  if (video.dislikes.includes(userId)) {
+    console.error("Dislike error:", err);
 
-    video.dislikes.pull(userId);
-
-  } else {
-
-    video.likes.pull(userId);
-    video.dislikes.push(userId);
+    res.status(500).json({
+      message: "Server error"
+    });
 
   }
-
-  await video.save();
-
-  res.json({
-
-    totalLikes: video.likes.length,
-    totalDislikes: video.dislikes.length
-
-  });
-
 });
-
 
 /* =========================
    VIEW COUNT
@@ -337,7 +390,94 @@ router.post("/view/:id", auth, async (req, res) => {
 
 });
 
+router.post("/:id/comment", auth, async (req, res) => {
+  try {
 
+    const videoId = req.params.id;
+    const userId = req.user.userId || req.user._id;
+    const { text } = req.body;
+
+    if (!text || text.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "Comment text is required"
+      });
+    }
+
+    // 🔍 Find video + uploader
+    const video = await Video.findById(videoId).populate("uploadedBy", "name");
+
+    if (!video) {
+      return res.status(404).json({
+        success: false,
+        message: "Video not found"
+      });
+    }
+
+    // 🔍 Find commenting user
+    const user = await User.findById(userId).select("name");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // ✅ Create comment
+    const newReview = {
+      user: userId,
+      rating: 5,
+      comment: text.trim(),
+      createdAt: new Date()
+    };
+
+    video.reviews.push(newReview);
+
+    await video.save();
+
+    const io = req.app.get("io");
+
+    // 🔥 Real-time comment display
+    io.emit("newComment", {
+      videoId: videoId,
+      username: user.name,
+      text: text.trim(),
+      createdAt: newReview.createdAt
+    });
+
+    // 🔔 Send notification ONLY to video owner
+    // 🔔 Save notification for video owner
+if (video.uploadedBy._id.toString() !== userId.toString()) {
+
+  await Notification.create({
+    receiver: video.uploadedBy._id,
+    sender: userId,
+    video: videoId,
+    type: "comment",
+    message: `${user.name} commented on your video`
+  });
+
+  console.log("✅ Comment notification created");
+
+}
+
+    res.status(201).json({
+      success: true,
+      message: "Comment added successfully"
+    });
+
+  } catch (error) {
+
+    console.error("Comment error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to add comment"
+    });
+
+  }
+});
 /* =========================
    DELETE VIDEO
 ========================= */

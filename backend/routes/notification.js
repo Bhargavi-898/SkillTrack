@@ -6,10 +6,9 @@ const auth = require("../middlewares/auth");
 
 
 /* =============================
-   GET MY NOTIFICATIONS (secure)
+   GET MY NOTIFICATIONS
 ============================= */
 router.get("/", auth, async (req, res) => {
-
   try {
 
     const userId = req.user.userId || req.user._id;
@@ -21,22 +20,12 @@ router.get("/", auth, async (req, res) => {
       .populate("video", "title")
       .sort({ createdAt: -1 });
 
-    res.status(200).json({
-      success: true,
-      notifications
-    });
+    res.status(200).json(notifications);
 
   } catch (err) {
-
     console.error("Get notifications error:", err);
-
-    res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
-
+    res.status(500).json({ message: "Server error" });
   }
-
 });
 
 
@@ -44,7 +33,6 @@ router.get("/", auth, async (req, res) => {
    GET UNREAD COUNT
 ============================= */
 router.get("/unread/count", auth, async (req, res) => {
-
   try {
 
     const userId = req.user.userId || req.user._id;
@@ -54,69 +42,55 @@ router.get("/unread/count", auth, async (req, res) => {
       isRead: false
     });
 
-    res.status(200).json({
-      success: true,
-      count
-    });
+    res.status(200).json({ count });
 
   } catch (err) {
-
     console.error("Unread count error:", err);
-
-    res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
-
+    res.status(500).json({ message: "Server error" });
   }
-
 });
 
 
 /* =============================
-   MARK SINGLE NOTIFICATION READ
+   MARK SINGLE NOTIFICATION READ (SECURE FIX)
 ============================= */
 router.put("/read/:id", auth, async (req, res) => {
-
   try {
 
-    const notification = await Notification.findByIdAndUpdate(
-      req.params.id,
-      { $set: { isRead: true } },
+    const userId = req.user.userId || req.user._id;
+
+    const notification = await Notification.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        receiver: userId   // ✅ security fix
+      },
+      {
+        $set: { isRead: true }
+      },
       { new: true }
     );
 
     if (!notification) {
       return res.status(404).json({
-        success: false,
         message: "Notification not found"
       });
     }
 
     res.status(200).json({
-      success: true,
       message: "Notification marked as read"
     });
 
   } catch (err) {
-
     console.error("Read notification error:", err);
-
-    res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
-
+    res.status(500).json({ message: "Server error" });
   }
-
 });
 
 
 /* =============================
-   MARK ALL NOTIFICATIONS READ ⭐ FIXED
+   MARK ALL NOTIFICATIONS READ
 ============================= */
 router.put("/read-all", auth, async (req, res) => {
-
   try {
 
     const userId = req.user.userId || req.user._id;
@@ -124,7 +98,7 @@ router.put("/read-all", auth, async (req, res) => {
     const result = await Notification.updateMany(
       {
         receiver: userId,
-        isRead: false   // ⭐ important fix
+        isRead: false   // only unread
       },
       {
         $set: { isRead: true }
@@ -132,22 +106,14 @@ router.put("/read-all", auth, async (req, res) => {
     );
 
     res.status(200).json({
-      success: true,
       message: "All notifications marked as read",
-      modifiedCount: result.modifiedCount
+      updated: result.modifiedCount
     });
 
   } catch (err) {
-
     console.error("Read-all error:", err);
-
-    res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
-
+    res.status(500).json({ message: "Server error" });
   }
-
 });
 
 

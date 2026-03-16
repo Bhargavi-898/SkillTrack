@@ -101,7 +101,22 @@
       color: #333;
       font-weight: 600;
     }
+    .back-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: #0073b1;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
 
+.back-btn:hover {
+    background: #005582;
+}
     #popupContent button {
       background-color: #667eea;
       color: white;
@@ -120,15 +135,11 @@
 <body>
 
   <h2>Upload Your Video</h2>
-
+  <button class="back-btn" onclick="goBack()">⬅ Back</button>
   <form id="uploadForm" enctype="multipart/form-data">
     <input type="text" id="title" name="title" placeholder="Video Title" required />
     <textarea id="description" name="description" placeholder="Description" required></textarea>
-    <select id="category" name="category" required>
-      <option value="">Select Category</option>
-      <option value="Technical">Technical</option>
-      <option value="Non-Technical">Non-Technical</option>
-    </select>
+    
     <input type="file" id="videoFile" name="video" accept="video/*" required />
     <button type="submit">Upload</button>
     <button type="button" onclick="window.location.href='dashboard.html'" style="margin-top: -5px; background: #ccc; color: #333;">
@@ -145,6 +156,10 @@
     </div>
   </div>
 
-  <script src="scripts/upload.js"></script>
+  <script src="scripts/upload.js">
+    function goBack() {
+    window.history.back();
+}
+  </script>
 </body>
 </html>

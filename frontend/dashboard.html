@@ -165,7 +165,97 @@
       color: #555;
       flex-grow: 1;
     }
+/* NOTES SECTION */
 
+.notes-section{
+    max-width:1100px;
+    margin:40px auto;
+    padding:20px;
+}
+
+.notes-header{
+    position:relative;
+    margin-bottom:30px;
+}
+
+.notes-title{
+    text-align:center;
+    font-size:28px;
+    font-weight:700;
+}
+
+.upload-btn{
+    position:absolute;
+    right:0;
+    top:0;
+    background:#3b82f6;
+    color:white;
+    border:none;
+    padding:10px 18px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.upload-btn:hover{
+    background:#2563eb;
+}
+
+.upload-form{
+    display:none;
+    max-width:500px;
+    margin:20px auto;
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+}
+
+.upload-form input,
+.upload-form textarea{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    border-radius:6px;
+    border:1px solid #ccc;
+}
+
+.submit-btn{
+    margin-top:15px;
+    background:#10b981;
+    color:white;
+    border:none;
+    padding:10px 16px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.notes-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:20px;
+}
+
+.note-card{
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+    transition:transform 0.2s;
+}
+
+.note-card:hover{
+    transform:translateY(-5px);
+}
+
+.note-card h3{
+    margin-top:0;
+}
+
+.note-card a{
+    color:#2563eb;
+    text-decoration:none;
+    font-weight:600;
+}
     .uploader-info {
       display: flex;
       align-items: center;
@@ -180,20 +270,33 @@
       object-fit: cover;
       border: 2px solid #3498db;
     }
-    .follow-btn {
-  margin-left: auto;
-  padding: 6px 14px;
-  background-color: #0d6efd;
-  color: white;
-  border: none;
-  border-radius: 16px;
-  cursor: pointer;
-  font-size: 13px;
+   
+.comment-section {
+  margin-top: 15px;
 }
 
-.follow-btn.following {
-  background-color: #6c757d;
+.comment-input {
+  width: 70%;
+  padding: 6px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
 }
+
+.comment-section button {
+  padding: 6px 10px;
+  margin-left: 5px;
+  border: none;
+  background: #007bff;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.comments-container {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
     .uploader-info span {
       font-weight: 600;
       font-size: 14px;
@@ -219,10 +322,19 @@
       gap: 6px;
       transition: color 0.2s ease;
     }
-
+   
     .action-btn:hover {
       color: #0d6efd;
     }
+    .upload-btn{
+background:#3b82f6;
+color:white;
+border:none;
+padding:10px 20px;
+border-radius:6px;
+cursor:pointer;
+}
+
 
     .action-btn.liked i,
     .action-btn.liked span {
@@ -271,7 +383,7 @@
       .video-card h3 {
         font-size: 18px;
       }
-
+     
       .uploader-info img {
         width: 28px;
         height: 28px;
@@ -281,7 +393,12 @@
         gap: 16px;
         margin-top: 12px;
       }
-
+.logo{
+  font-size:22px;
+  font-weight:bold;
+  letter-spacing:2px;
+  color:white;
+}
       .profile-menu {
         width: 200px;
       }
@@ -289,13 +406,13 @@
   </style>
 
   
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 </head>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <body>
   <nav class="navbar">
-    <h1>Skill Track</h1>
+    <h1 class="logo">SKILL TRACK</h1>
     <div style="display:flex; align-items:center; gap:20px;">
 
     <!-- 🔔 Notification Bell -->
@@ -331,6 +448,7 @@
         <hr />
         <button onclick="showUploadSection()">Upload Video</button>
         <button onclick="showVideoList()">View All Posts</button>
+        <button onclick="showNotes()">Notes / Resources</button>
         <button onclick="editProfile()">Edit Profile</button>
         <button onclick="logout()">Logout</button>
       </div>
@@ -351,10 +469,84 @@ style="
   z-index:999;
 ">
 </div>
-  <input type="text" id="searchBar" placeholder="Search videos by title..." />
-  <div id="videoResults"></div>
 
+  <input type="text" id="searchBar" placeholder="Search videos by title..." />
+
+<div id="videoResults"></div>
+
+<div id="notesSection" class="notes-section" style="display:none;">
+
+    <div class="notes-header">
+        <h2 class="notes-title">Knowledge Hub</h2>
+
+        <button onclick="showUploadNoteForm()" class="upload-btn">
+            Upload Notes
+        </button>
+    </div>
+
+    <div id="uploadNoteForm" class="upload-form">
+
+        <input type="text" id="noteTitle" placeholder="Title">
+
+        <textarea id="noteDescription" placeholder="Description"></textarea>
+
+        <input type="file" id="noteFile">
+
+        <button onclick="uploadNote()" class="submit-btn">
+            Submit
+        </button>
+
+    </div>
+
+    <div id="notesContainer" class="notes-grid"></div>
+
+</div>
   <script>
+    // Connect socket
+const socket = io("http://localhost:3000");
+
+
+socket.on("notification", (data) => {
+
+  console.log("Notification received:", data);
+
+  const badge = document.getElementById("notificationCount");
+  const panel = document.getElementById("notificationPanel");
+
+  if (!badge || !panel) return;
+
+  const div = document.createElement("div");
+  div.style.padding = "10px";
+  div.style.borderBottom = "1px solid #eee";
+
+  div.innerHTML = `
+    <b>${data.message}</b>
+    <br>
+    <small>${new Date().toLocaleString()}</small>
+  `;
+
+  panel.prepend(div);
+
+  let count = Number(badge.textContent) || 0;
+  badge.textContent = count + 1;
+  badge.style.display = "inline-block";
+});
+// Listen for live like updates
+socket.on("likeUpdated", (data) => {
+
+  const videoCard = document.querySelector(
+    `[data-video-id="${data.videoId}"]`
+  );
+
+  if (!videoCard) return;
+
+  const likeCount = videoCard.querySelector(".like-count");
+
+  if (likeCount) {
+    likeCount.textContent = data.totalLikes;
+  }
+
+});
     const userData = JSON.parse(localStorage.getItem("userData"));
     const token = localStorage.getItem("token");
 
@@ -390,6 +582,26 @@ style="
         profileMenu.classList.remove("show");
       }
     });
+    // Listen for new comments in real-time
+socket.on("newComment", (data) => {
+
+  console.log("New comment received:", data);
+
+  const commentsContainer = document.getElementById(
+    `comments-${data.videoId}`
+  );
+
+  if (!commentsContainer) return;
+
+  const commentDiv = document.createElement("div");
+
+  commentDiv.innerHTML = `
+    <b>${data.username}</b>: ${data.text}
+  `;
+
+  commentsContainer.appendChild(commentDiv);
+
+});
 
     function showUploadSection() {
       window.location.href = "upload.html";
@@ -411,26 +623,59 @@ style="
       localStorage.clear();
       window.location.href = "login.html";
     }
-    let notifications = [];
-function toggleNotifications() {
+   function postComment(videoId){
+
+const text = document.getElementById(`comment-input-${videoId}`).value;
+
+if(!text) return alert("Enter comment");
+
+fetch(`http://localhost:3000/api/videos/${videoId}/comment`,{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+Authorization:`Bearer ${token}`
+},
+
+body:JSON.stringify({comment:text})
+
+})
+.then(res=>res.json())
+.then(data=>{
+
+document.getElementById(`comment-input-${videoId}`).value="";
+
+loadComments(videoId);
+
+})
+.catch(err=>console.error(err));
+
+}
+async function toggleNotifications() {
 
   const panel = document.getElementById("notificationPanel");
-
   if (!panel) return;
 
-  const isHidden =
-    panel.style.display === "none" || panel.style.display === "";
+  const isHidden = window.getComputedStyle(panel).display === "none";
 
   if (isHidden) {
 
     panel.style.display = "block";
 
-    loadNotifications();
+    try {
+      // 1️⃣ Mark notifications as read first
+      await markNotificationsAsRead();
 
-    // ⭐ mark read AFTER panel opens
-    setTimeout(() => {
-      markNotificationsAsRead();
-    }, 300);
+      // 2️⃣ Reload notifications (so UI updates)
+      await loadNotifications();
+
+      // 3️⃣ Refresh badge
+      loadUnreadCount();
+
+    } catch (err) {
+      console.error("Toggle notification error:", err);
+    }
 
   } else {
 
@@ -439,84 +684,198 @@ function toggleNotifications() {
   }
 
 }
+function showNotes(){
+
+document.getElementById("videoResults").style.display="none";
+document.getElementById("notesSection").style.display="block";
+
+loadNotes();
+
+}
+function showUploadNoteForm(){
+
+const form = document.getElementById("uploadNoteForm");
+
+if(form.style.display === "none"){
+form.style.display = "block";
+}else{
+form.style.display = "none";
+}
+
+}
+async function uploadNote(){
+
+const title=document.getElementById("noteTitle").value;
+const description=document.getElementById("noteDescription").value;
+const file=document.getElementById("noteFile").files[0];
+
+const formData=new FormData();
+
+formData.append("title",title);
+formData.append("description",description);
+formData.append("file",file);
+
+const token=localStorage.getItem("token");
+
+const res=await fetch("http://localhost:3000/api/notes/upload",{
+
+method:"POST",
+
+headers:{
+Authorization:`Bearer ${token}`
+},
+
+body:formData
+
+});
+
+const data=await res.json();
+
+alert(data.message);
+
+loadNotes();
+
+}
+async function loadNotes(){
+
+const res = await fetch("http://localhost:3000/api/notes");
+
+const notes = await res.json();
+
+const container = document.getElementById("notesContainer");
+
+container.innerHTML = "";
+
+notes.forEach(note=>{
+
+const card = document.createElement("div");
+
+card.className = "note-card";
+
+card.innerHTML = `
+<h3>${note.title}</h3>
+<p>${note.description || ""}</p>
+
+<a href="http://localhost:3000/${note.fileUrl}" target="_blank">
+View / Download
+</a>
+`;
+
+container.appendChild(card);
+
+});
+
+}
+function toggleComments(videoId) {
+
+  const section = document.getElementById(`comment-section-${videoId}`);
+
+  if (section.style.display === "none") {
+
+    section.style.display = "block";
+
+    loadComments(videoId);
+
+  } else {
+
+    section.style.display = "none";
+
+  }
+
+}
+function loadComments(videoId) {
+
+  fetch(`http://localhost:3000/api/videos/${videoId}/comments`)
+    .then(res => res.json())
+    .then(comments => {
+
+      const container = document.getElementById(`comments-${videoId}`);
+      container.innerHTML = "";
+
+      comments.forEach(c => {
+
+        const div = document.createElement("div");
+
+        div.innerHTML = `
+          <b>${c.user?.name || "User"}</b>: ${c.comment}
+        `;
+
+        container.appendChild(div);
+
+      });
+
+    })
+    .catch(err => console.error("Load comments error:", err));
+
+}
 function loadUnreadCount() {
 
   const token = localStorage.getItem("token");
+  if (!token) return;
 
-  if (!token) {
-    console.warn("No token found");
-    return;
-  }
-
-  // wait until DOM element exists
   const badge = document.getElementById("notificationCount");
-
-  if (!badge) {
-    console.warn("Notification badge element not found");
-    return;
-  }
+  if (!badge) return;
 
   fetch("http://localhost:3000/api/notifications/unread/count", {
-    method: "GET",
     headers: {
       Authorization: `Bearer ${token}`
     }
   })
-  .then(response => response.json())
+  .then(res => {
+    if (!res.ok) throw new Error("Failed to fetch count");
+    return res.json();
+  })
   .then(data => {
 
-    console.log("Unread count received:", data); // DEBUG
+    console.log("Unread API response:", data);
 
-    const count = Number(data.count) || 0;
+    const count = data.count ?? 0;   // safer than Number()
 
     if (count > 0) {
-
-      badge.style.display = "block";   // IMPORTANT
-      badge.style.visibility = "visible";
-      badge.innerText = count;
-
+      badge.style.display = "inline-block";   // ✅ correct for badge
+      badge.textContent = count;
     } else {
-
       badge.style.display = "none";
-      badge.innerText = "";
-
+      badge.textContent = "";
     }
 
   })
-  .catch(error => {
-    console.error("Unread count fetch error:", error);
+  .catch(err => {
+    console.error("Unread count error:", err);
   });
 
 }
-function markNotificationsAsRead() {
+async function markNotificationsAsRead() {
 
   const token = localStorage.getItem("token");
+  if (!token) return;
 
-  fetch("http://localhost:3000/api/notifications/read-all", { // ✅ correct URL
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json"
+  try {
+
+    const res = await fetch("http://localhost:3000/api/notifications/read-all", {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to mark notifications as read");
     }
-  })
-  .then(res => res.json())
-  .then(data => {
 
     console.log("All notifications marked as read");
 
-    // immediately hide badge
-    const badge = document.getElementById("notificationCount");
+    // ✅ DO NOT manually hide badge here
+    // Let loadUnreadCount() control badge visibility
 
-    badge.style.display = "none";
-    badge.innerText = "";
+  } catch (err) {
 
-    // reload count from server
-    loadUnreadCount();
+    console.error("Mark read error:", err);
 
-  })
-  .catch(err => console.error("Mark read error:", err));
+  }
 
 }
+
 function loadNotifications() {
 
   const token = localStorage.getItem("token");
@@ -527,65 +886,65 @@ function loadNotifications() {
   }
 
   fetch("http://localhost:3000/api/notifications", {
-
     headers: {
       Authorization: `Bearer ${token}`
     }
-
   })
   .then(res => res.json())
-  .then(async data => {
+  .then(data => {
 
     const panel = document.getElementById("notificationPanel");
-    const count = document.getElementById("notificationCount");
+    const badge = document.getElementById("notificationCount");
 
-    if (!panel || !count) return;
+    if (!panel || !badge) return;
 
     panel.innerHTML = "";
 
     if (!data || data.length === 0) {
-
-      panel.innerHTML =
-        "<p style='padding:15px;'>No notifications</p>";
-
-      count.style.display = "none";
+      panel.innerHTML = "<p style='padding:15px;'>No notifications</p>";
+      badge.style.display = "none";
       return;
-
     }
 
-    // show count
-    
-    for (const n of data) {
+    data.forEach(n => {
 
       const div = document.createElement("div");
-
       div.style.padding = "10px";
       div.style.borderBottom = "1px solid #eee";
       div.style.cursor = "pointer";
 
       const senderName = n.sender?.name || "Someone";
 
+      let message = n.message;
+
+      if (!message) {
+        if (n.type === "like") {
+          message = "liked your video";
+        } else if (n.type === "dislike") {
+          message = "disliked your video";
+        } else if (n.type === "comment") {
+          message = "commented on your video";
+        } 
+        else {
+          message = "sent a notification";
+        }
+      }
+
       div.innerHTML = `
-        <b>${senderName}</b> liked your video
+        <b>${senderName}</b> ${message}
         <br>
         <small>${new Date(n.createdAt).toLocaleString()}</small>
       `;
 
       panel.appendChild(div);
 
-      // ✅ mark as read automatically
-      
+    });
 
-    }
-
-    // refresh unread count badge
     loadUnreadCount();
 
   })
   .catch(err => {
-
     console.error("Notification error:", err);
-
   });
 
 }
@@ -615,7 +974,7 @@ function loadNotifications() {
       videos.forEach(video => {
         const videoCard = document.createElement("div");
         videoCard.className = "video-card";
-
+        videoCard.setAttribute("data-video-id", video._id);
         const uploader = video.uploadedBy || {};
         const uploaderId = uploader._id || "";
         const uploaderName = uploader.name || "Unknown";
@@ -635,79 +994,108 @@ function loadNotifications() {
 
         const detailsId = `details-${video._id}`;
 
-        videoCard.innerHTML = `
-          <h3>${video.title}</h3>
-          <video controls onplay="registerView('${video._id}')">
-            <source src="${videoSrc}" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-          <p><strong>Description:</strong> ${video.description || "No description available"}</p>
-          <p><strong>Category:</strong> ${video.category || "N/A"}</p>
+      videoCard.setAttribute("data-video-id", video._id);  // 🔥 IMPORTANT for real-time
 
-          <div class="uploader-info">
-  <img src="${photoSrc}" alt="Uploader Photo" onclick="toggleDetails('${detailsId}')" />
+videoCard.innerHTML = `
+  <h3>${video.title}</h3>
+
+  <video controls onplay="registerView('${video._id}')">
+    <source src="${videoSrc}" type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+
+  <p><strong>Description:</strong> ${video.description || "No description available"}</p>
   
-  <span onclick="viewUserDetails('${uploaderId}')" style="cursor:pointer;">
-    ${uploaderName}
-  </span>
+  <!-- Uploader Info -->
+  <div class="uploader-info">
+    <img src="${photoSrc}" 
+         alt="Uploader Photo" 
+         onclick="toggleDetails('${detailsId}')" />
 
-  ${
-    uploaderId !== userData._id
-      ? `<button 
-           class="follow-btn" 
-           onclick="toggleFollow('${uploaderId}', this)"
-         >
-           Follow
-         </button>`
-      : ""
-  }
+    <span onclick="viewUserDetails('${uploaderId}')" 
+          style="cursor:pointer;">
+      ${uploaderName}
+    </span>
 
-</div>
-<div class="video-actions">
- <button onclick="toggleLike('${video._id}', this)" class="action-btn ${video.likes.includes(userData._id) ? 'liked' : ''}">
-  <i class="fas fa-thumbs-up"></i>
-  <span class="like-count">${video.likes.length}</span>
-</button>
-
-
-
-
-  <button onclick="toggleDislike('${video._id}', this)" class="action-btn ${video.dislikes?.includes(userData._id) ? 'disliked' : ''}">
-  <i class="fa-solid fa-thumbs-down"></i> 
-  <span class="dislike-count">${video.dislikes?.length || 0}</span>
-</button>
-
- 
-
-
-  <div class="view-info">
-    <i class="fa-solid fa-eye"></i> <span class="view-count">${video.views || 0}</span> views
   </div>
+
+  <!-- Video Actions -->
+  <div class="video-actions">
+
+    <button onclick="toggleLike('${video._id}', this)" 
+            class="action-btn ${video.likes.includes(userData._id) ? 'liked' : ''}">
+      <i class="fas fa-thumbs-up"></i>
+      <span class="like-count">${video.likes.length}</span>
+    </button>
+
+    <button onclick="toggleDislike('${video._id}', this)" 
+            class="action-btn ${video.dislikes?.includes(userData._id) ? 'disliked' : ''}">
+      <i class="fa-solid fa-thumbs-down"></i>
+      <span class="dislike-count">${video.dislikes?.length || 0}</span>
+    </button>
+
+    <div class="view-info">
+      <i class="fa-solid fa-eye"></i>
+      <span class="view-count">${video.views || 0}</span> views
+    </div>
+<!-- Show Comments Button -->
+<button onclick="toggleComments('${video._id}')">
+  Show Comments
+</button>
+
+<!-- Comment Section (Hidden by default) -->
+<div class="comment-section" id="comment-section-${video._id}" style="display:none;">
+
+<input type="text"
+       class="comment-input"
+       id="comment-input-${video._id}"
+       placeholder="Write a comment...">
+
+<button onclick="postComment('${video._id}')">
+Post
+</button>
+
+<div class="comments-container"
+     id="comments-${video._id}">
 </div>
 
-        
-
-
-          <div id="${detailsId}" class="user-details" style="display: none;">
-            <p><strong>Email:</strong> ${uploaderEmail}</p>
-            <p><strong>Branch:</strong> ${uploaderBranch}</p>
-            <p><strong>Year:</strong> ${uploaderYear}</p>
-          </div>
-
-         
-        `;
+</div>
+<!-- Hidden User Details -->
+<div id="${detailsId}"
+     class="user-details"
+     style="display:none;">
+  <p><strong>Email:</strong> ${uploaderEmail}</p>
+  <p><strong>Branch:</strong> ${uploaderBranch}</p>
+  <p><strong>Year:</strong> ${uploaderYear}</p>
+</div>
+`;
 
         container.appendChild(videoCard);
       });
     }
+function postComment(videoId) {
 
+  const input = document.getElementById(`comment-input-${videoId}`);
+  const text = input.value.trim();
 
-    function registerView(videoId) {
-      fetch(`http://localhost:3000/api/videos/${videoId}/view`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
-      }).catch(err => console.error("Error registering view:", err));
-    }
+  if (!text) return;
+
+  fetch(`http://localhost:3000/api/videos/${videoId}/comment`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ text })
+  })
+  .then(res => res.json())
+  .then(() => {
+    input.value = "";
+  })
+  .catch(err => console.error("Comment error:", err));
+}
+
+    
 function toggleLike(videoId, button) {
   const token = localStorage.getItem("token");
   if (!token) {
@@ -751,42 +1139,7 @@ function toggleLike(videoId, button) {
     });
 }
 
-function toggleFollow(targetUserId, button) {
 
-  const currentUserId = userData._id;
-
-  const isFollowing = button.classList.contains("following");
-
-  const url = isFollowing
-    ? `http://localhost:3000/api/users/unfollow/${targetUserId}`
-    : `http://localhost:3000/api/users/follow/${targetUserId}`;
-
-  fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      currentUserId: currentUserId
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-
-    if (isFollowing) {
-      button.classList.remove("following");
-      button.innerText = "Follow";
-    } else {
-      button.classList.add("following");
-      button.innerText = "Following";
-    }
-
-  })
-  .catch(err => {
-    console.error("Follow error:", err);
-  });
-
-}
 function toggleDislike(videoId, button) {
   const token = localStorage.getItem("token");
   if (!token) {

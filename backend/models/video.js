@@ -30,11 +30,7 @@ const videoSchema = new mongoose.Schema(
       ref: "User",
       required: [true, "Uploader reference is required"],
     },
-    category: {
-      type: String,
-      enum: ["Technical", "Non-Technical"],
-      required: [true, "Category is required"],
-    },
+    
     likes: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "User",
